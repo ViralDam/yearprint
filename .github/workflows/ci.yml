@@ -1,0 +1,44 @@
+# Checks every pull request and every push to main.
+#
+# The build prerenders pages from Supabase, so it needs the two public
+# values as repository *variables* (Settings → Secrets and variables →
+# Actions → Variables): NEXT_PUBLIC_SUPABASE_URL and
+# NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY. Without them the build step is skipped.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm format:check
+      - run: pnpm typecheck
+      - run: pnpm test
+      - name: Build
+        if: env.NEXT_PUBLIC_SUPABASE_URL != '' && env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY != ''
+        run: pnpm build
+      - name: Build skipped
+        if: env.NEXT_PUBLIC_SUPABASE_URL == '' || env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY == ''
+        run: echo "::warning::Set the NEXT_PUBLIC_SUPABASE_* repository variables to build in CI."

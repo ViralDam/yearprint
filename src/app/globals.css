@@ -1,0 +1,289 @@
+@import "tailwindcss";
+
+/*
+ * Yearprint design tokens, ported from the prototype.
+ * The "stage" is the table the paper lies on; the "paper" keeps its
+ * newsprint colours in dark mode, only the stage and HUD darken.
+ */
+:root {
+  --stage: #ddd5c2;
+  --stage-ink: #2a2417;
+  --stage-dim: #6f6450;
+  --hud: #26211a;
+  --hud-ink: #f0e8d2;
+  --paper: #f4ecd4;
+  --paper-2: #eee2c6;
+  --paper-edge: #d9cba6;
+  --ink: #221c11;
+  --ink-soft: #4c4433;
+  --ink-faint: #7d7260;
+  --rule: #2a2417;
+  --accent: #96291a;
+  --accent-ink: #fff6e8;
+  --gold: #a97b1f;
+  --good: #2e6b34;
+  --paper-shadow: 0 18px 50px rgba(38, 30, 12, 0.35), 0 3px 10px rgba(38, 30, 12, 0.25);
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --stage: #14110c;
+    --stage-ink: #e9e1cb;
+    --stage-dim: #9a8f74;
+    --hud: #0d0b08;
+    --hud-ink: #f0e8d2;
+    --paper-shadow: 0 18px 50px rgba(0, 0, 0, 0.6), 0 3px 10px rgba(0, 0, 0, 0.5);
+  }
+}
+
+@theme inline {
+  --color-stage: var(--stage);
+  --color-stage-ink: var(--stage-ink);
+  --color-stage-dim: var(--stage-dim);
+  --color-hud: var(--hud);
+  --color-hud-ink: var(--hud-ink);
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-paper-edge: var(--paper-edge);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-rule: var(--rule);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-gold: var(--gold);
+  --color-good: var(--good);
+
+  --shadow-paper: var(--paper-shadow);
+
+  --font-display: var(--font-playfair), "Playfair Display", Georgia, serif;
+  --font-serif: var(--font-newsreader), Georgia, serif;
+  --font-sans: var(--font-franklin), "Helvetica Neue", Arial, sans-serif;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    /* Set by the guess dock on /play so focused controls don't land under it. */
+    scroll-padding-bottom: var(--guess-dock-h, 0px);
+  }
+  body {
+    background: var(--stage);
+    color: var(--stage-ink);
+    font-family: var(--font-serif);
+  }
+  button {
+    cursor: pointer;
+  }
+  :where(button, input, a):focus-visible {
+    outline: 3px solid var(--gold);
+    outline-offset: 2px;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+}
+
+/*
+ * Newspaper pieces that are awkward as plain utilities (pseudo-elements,
+ * layered backgrounds, custom properties). Everything else is utilities.
+ */
+@layer components {
+  /* A sheet of newsprint with the thin inset frame line. */
+  .newsprint {
+    position: relative;
+    background:
+      radial-gradient(ellipse 90% 40% at 20% 0%, rgb(169 123 31 / 0.1), transparent 60%),
+      radial-gradient(ellipse 70% 30% at 90% 100%, rgb(120 84 30 / 0.1), transparent 60%),
+      var(--paper);
+    color: var(--ink);
+    border: 1px solid var(--paper-edge);
+    box-shadow: var(--paper-shadow);
+  }
+  .newsprint::before {
+    content: "";
+    position: absolute;
+    inset: 6px;
+    border: 1px solid rgb(42 36 23 / 0.25);
+    pointer-events: none;
+  }
+
+  /* Archival photo treatment. */
+  .photo {
+    display: block;
+    width: 100%;
+    object-fit: cover;
+    border: 1px solid rgb(42 36 23 / 0.55);
+    filter: grayscale(1) contrast(1.07) sepia(0.22) brightness(1.02);
+    background: var(--paper-2);
+  }
+
+  /* Greeked body copy: grey bars standing in for the rest of the column. */
+  .greek {
+    height: calc(var(--lines, 4) * 10px);
+    margin-top: 9px;
+    opacity: 0.5;
+    border-radius: 1px;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      rgb(34 28 17 / 0.42) 0,
+      rgb(34 28 17 / 0.42) 4px,
+      transparent 4px,
+      transparent 10px
+    );
+  }
+  .greek-end {
+    width: 56%;
+    height: 10px;
+    margin-top: 2px;
+    opacity: 0.5;
+    background: rgb(34 28 17 / 0.42);
+    background-clip: content-box;
+    padding-bottom: 6px;
+  }
+
+  /* The torn-off date. */
+  .redacted {
+    background: var(--ink);
+    color: var(--ink);
+    border-radius: 2px;
+    padding: 1px 10px;
+    user-select: none;
+    letter-spacing: 0.2em;
+    font-weight: 800;
+  }
+  .redacted::after {
+    content: "YEAR";
+    color: rgb(244 236 212 / 0.55);
+    font-size: 10px;
+    letter-spacing: 0.35em;
+  }
+
+  /* Diagonal hatching behind adverts. */
+  .ad-hatch {
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 10px,
+      rgb(42 36 23 / 0.03) 10px,
+      rgb(42 36 23 / 0.03) 20px
+    );
+  }
+
+  /* Centered caption between two rules: ——— INSIDE THIS EDITION ——— */
+  .rule-text {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .rule-text::before,
+  .rule-text::after {
+    content: "";
+    flex: 1;
+    border-top: 1.5px solid var(--rule);
+  }
+
+  .drop-cap::first-letter {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 44px;
+    line-height: 0.85;
+    float: left;
+    padding: 3px 7px 0 0;
+  }
+
+  .btn-accent,
+  .btn-ghost,
+  .btn-ink,
+  .btn-outline {
+    border-radius: 4px;
+    font-family: var(--font-sans);
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition:
+      filter 0.15s,
+      background-color 0.15s;
+  }
+  .btn-accent {
+    background: var(--accent);
+    color: var(--accent-ink);
+    padding: 13px 22px;
+    font-size: 15px;
+  }
+  .btn-accent:hover:not(:disabled) {
+    filter: brightness(1.12);
+  }
+  .btn-ghost {
+    border: 1.5px solid var(--stage-ink);
+    color: var(--stage-ink);
+    padding: 12px 20px;
+    font-size: 15px;
+  }
+  .btn-ghost:hover {
+    background: color-mix(in srgb, var(--stage-ink) 9%, transparent);
+  }
+  .btn-ink {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 11px 18px;
+    font-size: 14px;
+  }
+  .btn-ink:hover:not(:disabled) {
+    background: var(--accent);
+  }
+  .btn-outline {
+    border: 1.5px solid var(--ink);
+    color: var(--ink);
+    padding: 10px 17px;
+    font-size: 14px;
+  }
+  .btn-accent:disabled,
+  .btn-ink:disabled {
+    opacity: 0.45;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .animate-unfold {
+      animation: unfold 0.55s ease;
+      transform-origin: top center;
+    }
+    .animate-flash {
+      animation: flash 0.5s ease;
+    }
+    .animate-rise {
+      animation: rise 0.3s ease;
+    }
+  }
+}
+
+@keyframes unfold {
+  from {
+    transform: perspective(1400px) rotateX(-55deg);
+    opacity: 0;
+  }
+  to {
+    transform: perspective(1400px) rotateX(0);
+    opacity: 1;
+  }
+}
+@keyframes flash {
+  0% {
+    color: #ffb3a3;
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
